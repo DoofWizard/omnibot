@@ -1,0 +1,14 @@
+{
+  "kickChannel": "CHANGE_ME",
+  "command": "!tts",
+  "omnivoiceBaseUrl": "http://127.0.0.1:7861",
+  "language": "English",
+  "voiceProfile": "",
+  "maxMessageLength": 240,
+  "userCooldownSeconds": 20,
+  "globalCooldownSeconds": 2,
+  "maxQueueLength": 10,
+  "rejectUrls": true,
+  "ignoreUsers": [],
+  "debug": false
+}

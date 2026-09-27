@@ -1,0 +1,17 @@
+{
+  "name": "omnibot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Simple Kick chat to OmniVoiceTTS bridge",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "self-test": "node src/index.js --self-test"
+  },
+  "dependencies": {
+    "kick-wss": "1.0.5"
+  }
+}
