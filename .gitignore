@@ -1,3 +1,5 @@
 node_modules/
 *.log
 tmp/
+settings.local.json
+settings.local.json.tmp

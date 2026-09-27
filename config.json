@@ -1,5 +1,8 @@
 {
   "kickChannel": "CHANGE_ME",
+  "twitchChannel": "",
+  "youtubeVideo": "",
+  "youtubeApiKey": "",
   "command": "!tts",
   "omnivoiceBaseUrl": "http://127.0.0.1:7861",
   "language": "English",

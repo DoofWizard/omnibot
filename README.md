@@ -1,86 +1,71 @@
 # OmniBot
 
-**OmniBot** is a deliberately simple Windows bridge from public **Kick chat** to **OmniVoiceTTS**.
+Windows chat-to-speech for **Kick, Twitch, and YouTube**, using any sample saved in **Hangry Labs OmniVoiceTTS**.
+
+## Start here
+
+1. Download this repository with **Code > Download ZIP**, then **Extract All**. Do not run it inside the ZIP.
+2. Start your existing OmniVoice installation.
+3. Double-click **START_OMNIBOT.bat**. It prepares Node.js and the small dependency if needed, then opens the control window in your browser.
+4. Enter a Kick channel, Twitch channel, or both. Click **Save settings**.
+5. Click **Refresh voices**, choose a sample, and click **Test voice**.
+6. Click **Start bot**. Confirm the chosen platform says **Connected**.
+
+After setup: start OmniVoice, double-click START_OMNIBOT.bat, and click Start bot. Your settings are remembered. Keep the launcher open. **Quit** in the dashboard closes the bot. Closing the browser tab alone does not stop it.
+
+RUN_ME_FIRST.bat and configure.ps1 remain as compatibility shortcuts to the same launcher. TEST_OMNIVOICE.bat is an optional console test after first-time setup.
+
+## Voice commands
 
 ```
-Kick chat -> !tts -> OmniBot -> OmniVoiceTTS -> Windows audio -> OBS
+!tts samplename words to say
+!tts "Sample With Spaces" words to say
+!tts (Sample With Spaces) words to say
 ```
 
-## Ryan-proof setup
+There is no hardcoded sample list. The bot discovers saved local profiles from OmniVoice and refreshes its cache on the next chat request after 30 seconds. **Refresh voices** updates it immediately. Matching is case-insensitive unless names differ only by case; use the exact name then. Unknown samples are rejected, never replaced with a random voice. Only the words after the sample name are spoken. Profile language/seed defaults are retained by not overriding them.
 
-For a normal Windows PC, the streamer should only have to do this:
+To add a sample, click **Add samples in OmniVoice**, open its **Voices** tab, upload your audio, give it a name, and save the profile. Return to OmniBot and refresh. Loose audio files not saved as OmniVoice profiles are not discoverable. OmniBot does not install the GPU model or manage OmniVoice's Docker installation.
 
-1. Download/copy the `omnibot` folder.
-2. Double-click **`RUN_ME_FIRST.bat`**.
-3. Type the Kick channel name when asked.
-4. Start OmniVoice.
-5. Double-click **`TEST_OMNIVOICE.bat`**.
-6. If you hear the test sentence, double-click **`START_OMNIBOT.bat`**.
-7. In Kick chat, type:
-   ```
-   !tts hello from Kick
-   ```
+## Platforms
 
-Keep the OmniBot window open while streaming.
+| Platform | Setup | Transport |
+| --- | --- | --- |
+| Kick | Channel name | Public read-only kick-wss connection; unofficial |
+| Twitch | Channel name | Anonymous read-only IRC over secure WebSocket; no bot account |
+| YouTube | Current live-video link and YouTube Data API key | Official public live-chat API; quota applies |
 
-### What RUN_ME_FIRST does
+Multiple platforms can run together. Each shows its own status. A platform failure does not stop the others. Cooldowns are per platform/user, and all platforms share one bounded speech queue. The bot never posts chat messages or moderates users.
 
-It checks for Node.js. If Node is missing and Windows Package Manager is available, it installs the official Node.js LTS package automatically. Then it installs OmniBot's one dependency and asks for the Kick channel name. The streamer does **not** have to edit JSON or run npm manually.
+### YouTube: one-time helper setup
 
-## No bot account or moderator role
+A technical helper should create a Google Cloud project, enable **YouTube Data API v3**, and create an API key restricted to that API. Paste it into the dashboard's YouTube setup, with the actual currently live video's link. Do not enter a channel-page link. Update the video link for each new broadcast. Live chat must be enabled and publicly accessible.
 
-v0.1 only reads **public Kick chat**. It does not send messages or moderate users. A separate Kick bot identity is not required, and making anything a moderator is not part of setup.
+The key is saved locally in `settings.local.json`, excluded from Git. The dashboard never returns the saved key to the browser. Leave the key field blank to keep it; use **Forget the saved key** to remove it. Do not share your local settings file.
 
-## Current verified interfaces
+YouTube consumes Google API quota. This version uses paginated polling no faster than the server's requested interval and at least five seconds apart. It skips the initial chat history, stops on permanent API errors or an ended broadcast, and backs off on temporary failures. It does not buy quota or enable billing. A quota error needs a reset or a helper to review the Google project. Long-session quota efficiency is a known limitation; streaming API support is planned.
 
-OmniBot v0.1 pins `kick-wss 1.0.5`. Its current documentation exposes `KickWebSocket`, `connect(channelName)`, `ChatMessage`, public-chat operation without authentication, and automatic reconnection.
+## Controls and troubleshooting
 
-OmniVoiceTTS currently documents:
-- `GET /tts/ping`
-- `POST /tts/generate`
-- `voice_profile`
-- WAV output by default or via `output_format: "wav"`
+- **Mute now** interrupts local playback, cancels the active HTTP request, and discards waiting messages. OmniVoice may finish already-started GPU work on its own server.
+- **Stop** disconnects all chat sources and cancels audio. **Quit** also closes the local dashboard server.
+- **Cannot reach OmniVoice:** start OmniVoice and verify its address under Settings. The default is `http://127.0.0.1:7861`.
+- **No voices:** save a named profile in OmniVoice's Voices tab, then refresh.
+- **Connection error:** check that platform's channel/video, internet connection, and YouTube key/quota. Stop, then Start to retry a terminal failure.
+- **No sound / OBS silent:** check Windows volume and output device. Capture the same device in OBS Desktop Audio.
+- **Node installation fails:** install Node.js LTS (22 or newer) from https://nodejs.org and reopen the launcher. Administrator approval or a Windows restart may be needed for the installation.
+- **Already open:** use the existing OmniBot browser tab and launcher window.
 
-Those are the interfaces OmniBot uses.
+Defaults: 240 spoken characters, 20-second per-user cooldown, 2-second global gap, 10 waiting messages, URL rejection and duplicate suppression. Advanced defaults are in config.json; saved local settings override them.
 
-## Default protections
+## Development and validation
 
-- command: `!tts`
-- max message: 240 characters
-- per-user cooldown: 20 seconds
-- global TTS cooldown: 2 seconds
-- waiting queue cap: 10
-- URLs rejected
-- identical consecutive requests rejected
-- ignored-user list
-- one audio clip at a time
+Requires Windows PowerShell for audio and the launcher, Node.js 22+ for built-in WebSocket/fetch. Platform compatibility means streaming-platform support; macOS/Linux audio is not implemented.
 
-Advanced settings remain in `config.json`, but the streamer does not need to touch them for normal use.
+```
+npm ci --ignore-scripts
+npm test
+npm start
+```
 
-## Troubleshooting
-
-### TEST_OMNIVOICE says OmniVoice is not reachable
-OmniVoice is not running at `http://127.0.0.1:7861`. Start OmniVoice first.
-
-### Kick does not connect
-Run `configure.ps1` again, or rerun `RUN_ME_FIRST.bat`, and enter only the Kick channel name—not the whole URL.
-
-### The bot says TTS happened but OBS cannot hear it
-OmniBot plays through the normal Windows output device. OBS should capture that device as Desktop Audio.
-
-### Chat is abusing TTS
-Increase `userCooldownSeconds`, lower `maxQueueLength`, or add usernames to `ignoreUsers` in `config.json`.
-
-## Transport note
-
-v0.1 uses `kick-wss 1.0.5` because it gives us the lowest-friction read-only public chat connection. It is an unofficial transport, so a future Kick-side change can require an OmniBot update. The TTS and queue code are intentionally isolated from that choice so we can replace the transport later without rebuilding the whole bot.
-
-## Status
-
-**v0.1.0 — functional MVP / first-stream validation build**
-
-Before treating it as appliance-grade software, test it against the streamer's actual Kick channel and actual OmniVoice installation once.
-
-## Safety and voice rights
-
-OmniVoice supports voice cloning. Use voices you have authorization to use. Do not use OmniBot for deceptive impersonation, fraud, harassment, or other misuse.
+Automated tests cover sample discovery, command parsing, outgoing TTS payloads, platform normalization, YouTube history/pagination, queue bounds, cooldowns, cancellation, and dashboard access restrictions. Real GPU generation, the user's Windows/OBS audio routing, and real chat credentials still need a first-stream acceptance test. See RND.md for architecture, evidence, and release gates.

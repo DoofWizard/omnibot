@@ -1,15 +1,16 @@
 {
   "name": "omnibot",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Simple Kick chat to OmniVoiceTTS bridge",
+  "description": "Kick, Twitch and YouTube chat to saved OmniVoice samples with a local dashboard",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "start": "node src/index.js",
-    "self-test": "node src/index.js --self-test"
+    "self-test": "node src/index.js --self-test",
+    "test": "node --test"
   },
   "dependencies": {
     "kick-wss": "1.0.5"
